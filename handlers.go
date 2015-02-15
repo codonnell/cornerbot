@@ -15,10 +15,11 @@ var botHandlers = []irc.HandlerFunc{
 	Hug,
 	SelfEsteem,
 	Glitter,
+	Slap,
+	Lurve,
 	CreateAction("tickle", "ties %s up to the bedpost tightly and takes out a feather. Time for some tickles!"),
 	CreateAction("lick", "jumps on top of %s and gives them a big slobbery lick!"),
 	CreateAction("peck", "sneaks up on %s and delicately pecks them on the cheek"),
-	CreateAction("slap", "bops %s on the head and reminds them that violence is bad!"),
 	CreateAction("paint", "pulls out the paint set as %s lays naked on the couch posing"),
 	CreateAction("landlust", "lusts %s!"),
 	CreateAction("beer", "goes to the fridge, grabs a fresh bottle, pops the cap off and hands it to %s. Enjoy!"),
@@ -26,6 +27,7 @@ var botHandlers = []irc.HandlerFunc{
 	CreateAction("pinch", "sneaks behind %s and gives a little pinch on the butt!"),
 	CreateAction("snuggle", "curls up next to %s and snuggles closely"),
 	CreateAction("pillowfight", "waits until they are sleeping and SMOTHERS %s WITH A PILLOW!"),
+	CreateAction("encourage", "cheers %[1]s on. GOOOOOO %[1]s! YOU GOT DIS!"),
 }
 
 func addBotHandlers(conn *irc.Conn) {
@@ -58,6 +60,26 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 	}
 }
 
+func Lurve(conn *irc.Conn, line *irc.Line) {
+	isLurve := regexp.MustCompile(`!lurve (\S+)`)
+	matches := isLurve.FindStringSubmatch(line.Text())
+	if len(matches) == 2 {
+		var buffer bytes.Buffer
+		for i := 0; i < 10; i++ {
+			buffer.WriteString("\x03")
+			if i%2 == 0 {
+				buffer.WriteString("4")
+			} else {
+				buffer.WriteString("13")
+			}
+			buffer.WriteString("❤")
+		}
+		buffer.WriteString("\x03")
+		hearts := buffer.String()
+		conn.Privmsg(line.Target(), hearts+matches[1]+hearts)
+	}
+}
+
 func Glitter(conn *irc.Conn, line *irc.Line) {
 	containsGlitter := regexp.MustCompile(`!glitter`)
 	if containsGlitter.MatchString(line.Text()) {
@@ -82,6 +104,14 @@ func Hug(conn *irc.Conn, line *irc.Line) {
 		conn.Action(line.Target(), "hugs everyone!")
 	} else {
 		conn.Action(line.Target(), "hugs "+matches[1])
+	}
+}
+
+func Slap(conn *irc.Conn, line *irc.Line) {
+	isSlap := regexp.MustCompile(`!slap (\S)+`)
+	matches := isSlap.FindStringSubmatch(line.Text())
+	if len(matches) > 0 {
+		conn.Action(line.Target(), "bops "+line.Nick+" on the head and reminds them that violence is bad!")
 	}
 }
 
