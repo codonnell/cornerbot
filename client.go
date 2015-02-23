@@ -10,7 +10,7 @@ import (
 )
 
 var host *string = flag.String("host", "irc.utonet.org", "IRC server")
-var channel *string = flag.String("channel", "#rainbot", "IRC channel")
+var channel *string = flag.String("channel", "#thecorner", "IRC channel")
 var reqiRainbowChan *string = flag.String("reqiRainbowChan", "#supersecretprivatechan", "rainbow and reqi chan")
 
 func main() {
