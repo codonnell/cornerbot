@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	// create new IRC connection
-	c := irc.SimpleClient("rainbot-test", "rainbot-test")
+	c := irc.SimpleClient("rainbot", "rainbot")
 	c.EnableStateTracking()
 	c.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) { 
