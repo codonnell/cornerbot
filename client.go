@@ -11,6 +11,7 @@ import (
 
 var host *string = flag.String("host", "irc.utonet.org", "IRC server")
 var channel *string = flag.String("channel", "#rainbot", "IRC channel")
+var reqiRainbowChan *string = flag.String("reqiRainbowChan", "#supersecretprivatechan", "rainbow and reqi chan")
 
 func main() {
 	flag.Parse()
@@ -19,7 +20,10 @@ func main() {
 	c := irc.SimpleClient("rainbot-test", "rainbot-test")
 	c.EnableStateTracking()
 	c.HandleFunc("connected",
-		func(conn *irc.Conn, line *irc.Line) { conn.Join(*channel) })
+		func(conn *irc.Conn, line *irc.Line) { 
+			conn.Join(*channel)
+			conn.Join(*reqiRainbowChan)
+		})
 
 	// Set up a handler to notify of disconnect events.
 	quit := make(chan bool)
