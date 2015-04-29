@@ -30,7 +30,7 @@ var botHandlers = []irc.HandlerFunc{
 	CreateAction("encourage", "cheers %[1]s on. GOOOOOO %[1]s! YOU GOT DIS!"),
 	CreateAction("bearhug", "opens the bear cage and watches as %s gets mauled! AWW! What a big hug!"),
 	CreateAction("pat", "pats %s on head, good jooob!"),
-	CreateAction("defen", "tosses %s out the window"),
+	CreateAction("defenestrate", "tosses %s out the window"),
 }
 
 func addBotHandlers(conn *irc.Conn) {
