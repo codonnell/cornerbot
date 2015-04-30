@@ -10,7 +10,7 @@ import (
 )
 
 var botHandlers = []irc.HandlerFunc{
-	Identified,
+	// Identified,
 	Heart,
 	RandomPage,
 	Hug,
