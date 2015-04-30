@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	// "fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -73,20 +73,20 @@ func (db *CornerDB) AddPoints(nick string, points int) {
 	db.SetPoints(nick, user.points+points)
 }
 
-func main() {
-	db := CornerDB{Connect()}
-	defer db.db.Close()
-
-	db.CreateUser("testuser")
-	db.SetPoints("testuser", 100)
-	db.AddPoints("testuser", -5)
-	user := db.GetUser("testuser")
-	if user == nil {
-		fmt.Println("User does not exist")
-	} else {
-		fmt.Printf("Got user: %s, %d\n", user.nick, user.points)
-	}
-}
+// func main() {
+// 	db := CornerDB{Connect()}
+// 	defer db.db.Close()
+//
+// 	db.CreateUser("testuser")
+// 	db.SetPoints("testuser", 100)
+// 	db.AddPoints("testuser", -5)
+// 	user := db.GetUser("testuser")
+// 	if user == nil {
+// 		fmt.Println("User does not exist")
+// 	} else {
+// 		fmt.Printf("Got user: %s, %d\n", user.nick, user.points)
+// 	}
+// }
 
 func checkErr(err error) {
 	if err != nil {

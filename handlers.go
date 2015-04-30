@@ -10,6 +10,7 @@ import (
 )
 
 var botHandlers = []irc.HandlerFunc{
+	Identified,
 	Heart,
 	RandomPage,
 	Hug,
@@ -17,6 +18,7 @@ var botHandlers = []irc.HandlerFunc{
 	Glitter,
 	Slap,
 	Lurve,
+	Identified,
 	CreateAction("tickle", "ties %s up to the bedpost tightly and takes out a feather. Time for some tickles!"),
 	CreateAction("lick", "jumps on top of %s and gives them a big slobbery lick!"),
 	CreateAction("peck", "sneaks up on %s and delicately pecks them on the cheek"),
@@ -59,6 +61,19 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 			return
 		} else {
 			conn.Action(line.Target(), fmt.Sprintf(message, matches[1]))
+		}
+	}
+}
+
+func Identified(conn *irc.Conn, line *irc.Line) {
+	isIdentify := regexp.MustCompile(`!identified (\S+)`)
+	matches := isIdentify.FindStringSubmatch(line.Text())
+	if len(matches) == 2 {
+		identified := isIdentified(conn, matches[1])
+		if identified {
+			conn.Privmsg(line.Target(), matches[1]+" is identified.")
+		} else {
+			conn.Privmsg(line.Target(), matches[1]+" is not identified.")
 		}
 	}
 }
