@@ -10,7 +10,7 @@ import (
 )
 
 var botHandlers = []irc.HandlerFunc{
-	// Identified,
+	Printer,
 	Heart,
 	RandomPage,
 	Hug,
@@ -39,6 +39,7 @@ func addBotHandlers(conn *irc.Conn) {
 	for _, h := range botHandlers {
 		conn.HandleFunc("privmsg", h)
 	}
+	conn.HandleFunc("notice", Printer)
 }
 
 func Colorize(text string) string {
@@ -65,16 +66,25 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 	}
 }
 
+func Printer(conn *irc.Conn, line *irc.Line) {
+	fmt.Println(line.Target(), ": ", line.Text())
+}
+
 func Identified(conn *irc.Conn, line *irc.Line) {
 	isIdentify := regexp.MustCompile(`!identified (\S+)`)
 	matches := isIdentify.FindStringSubmatch(line.Text())
 	if len(matches) == 2 {
-		identified := isIdentified(conn, matches[1])
-		if identified {
-			conn.Privmsg(line.Target(), matches[1]+" is identified.")
-		} else {
-			conn.Privmsg(line.Target(), matches[1]+" is not identified.")
-		}
+		fmt.Println("Calls isIdentified.")
+		go IdentifyMsg(conn, line.Target(), matches[1])
+	}
+}
+
+func IdentifyMsg(conn *irc.Conn, target string, nick string) {
+	identified := isIdentified(conn, nick)
+	if identified {
+		conn.Privmsg(target, nick+" is identified.")
+	} else {
+		conn.Privmsg(target, nick+" is not identified.")
 	}
 }
 

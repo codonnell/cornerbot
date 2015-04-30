@@ -1,16 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	irc "github.com/fluffle/goirc/client"
 )
 
 func isIdentified(conn *irc.Conn, nick string) bool {
-	authChan := make(chan bool)
-	handler := conn.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
-		isStatus := regexp.MustCompile("status " + nick + " \\d")
-		if line.Target() != "NickServ" {
+	authChan := make(chan bool, 1)
+	handler := conn.HandleFunc("notice", func(conn *irc.Conn, line *irc.Line) {
+		isStatus := regexp.MustCompile("STATUS " + nick + " (\\d)")
+		if strings.ToLower(line.Target()) != "nickserv" {
 			return
 		}
 		matches := isStatus.FindStringSubmatch(line.Text())
@@ -23,7 +25,7 @@ func isIdentified(conn *irc.Conn, nick string) bool {
 			authChan <- false
 		}
 	})
-	conn.Privmsg("NickServ", "status "+nick)
+	conn.Privmsg("nickserv", "status "+nick)
 	isAuthed := <-authChan
 	handler.Remove()
 	return isAuthed
