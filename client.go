@@ -2,27 +2,42 @@ package main
 
 import (
 	"bufio"
-	"flag"
+	"encoding/json"
 	"fmt"
 	irc "github.com/fluffle/goirc/client"
+	"log"
 	"os"
 	"strings"
 )
 
-var host *string = flag.String("host", "irc.utonet.org", "IRC server")
-var channel *string = flag.String("channel", "#thecorner", "IRC channel")
-var reqiRainbowChan *string = flag.String("reqiRainbowChan", "#supersecretprivatechan", "rainbow and reqi chan")
+type BotConfig struct {
+	Host     string   `json:"host"`
+	Channels []string `json:"channels"`
+	User     string   `json:"user"`
+	Nick     string   `json:"nick"`
+}
+
+// var host *string = flag.String("host", "irc.utonet.org", "IRC server")
+// var channel *string = flag.String("channel", "#thecorner", "IRC channel")
+// var reqiRainbowChan *string = flag.String("reqiRainbowChan", "#supersecretprivatechan", "rainbow and reqi chan")
 
 func main() {
-	flag.Parse()
+	file, _ := os.Open("conf.json")
+	decoder := json.NewDecoder(file)
+	config := BotConfig{}
+	err := decoder.Decode(&config)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create new IRC connection
-	c := irc.SimpleClient("rainbot", "rainbot")
+	c := irc.SimpleClient(config.User, config.Nick)
 	c.EnableStateTracking()
 	c.HandleFunc("connected",
-		func(conn *irc.Conn, line *irc.Line) { 
-			conn.Join(*channel)
-			conn.Join(*reqiRainbowChan)
+		func(conn *irc.Conn, line *irc.Line) {
+			for _, c := range config.Channels {
+				conn.Join(c)
+			}
 		})
 
 	// Set up a handler to notify of disconnect events.
@@ -88,7 +103,7 @@ func main() {
 
 	for !reallyquit {
 		// connect to server
-		if err := c.ConnectTo(*host); err != nil {
+		if err := c.ConnectTo(config.Host); err != nil {
 			fmt.Printf("Connection error: %s\n", err)
 			return
 		}
