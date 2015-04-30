@@ -8,7 +8,7 @@ import (
 
 func isIdentified(conn *irc.Conn, nick string) bool {
 	authChan := make(chan bool)
-	remover := conn.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
+	handler := conn.HandleFunc("privmsg", func(conn *irc.Conn, line *irc.Line) {
 		isStatus := regexp.MustCompile("status " + nick + " \\d")
 		if line.Target() != "NickServ" {
 			return
@@ -25,6 +25,6 @@ func isIdentified(conn *irc.Conn, nick string) bool {
 	})
 	conn.Privmsg("NickServ", "status "+nick)
 	isAuthed := <-authChan
-	remover.Remove()
+	handler.Remove()
 	return isAuthed
 }
