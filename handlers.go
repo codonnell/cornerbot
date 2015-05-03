@@ -172,8 +172,6 @@ func AddPointsHandler(conn *irc.Conn, line *irc.Line) {
 	isAddPoints := regexp.MustCompile(`!addpts (\S+) ([-]?\d+)`)
 	matches := isAddPoints.FindStringSubmatch(line.Text())
 	if len(matches) != 3 {
-		fmt.Println("Failed at matches")
-		fmt.Println(matches)
 		return
 	}
 	if line.Nick != config.Owner {
@@ -191,7 +189,7 @@ func AddPointsHandler(conn *irc.Conn, line *irc.Line) {
 func AddPointsHelper(conn *irc.Conn, line *irc.Line, nick string, points int) {
 	if isIdentified(conn, config.Owner) {
 		DB.AddPoints(nick, points)
-		conn.Privmsg(line.Target(), nick+" has "+strconv.Itoa(DB.GetPoints(nick))+" points.")
+		conn.Privmsg(line.Target(), nick+" has "+strconv.Itoa(DB.GetPoints(nick))+Colorize(" rainbow points."))
 	} else {
 		conn.Privmsg(line.Target(), "Nice try... I'm onto you.")
 	}
@@ -204,8 +202,8 @@ func GetPointsHandler(conn *irc.Conn, line *irc.Line) {
 		return
 	}
 	if matches[1] == config.Owner {
-		conn.Privmsg(line.Target(), "You wish you had as many points as "+config.Owner)
+		conn.Privmsg(line.Target(), "You wish you had as many "+Colorize("rainbow points")+" as "+config.Owner)
 	} else {
-		conn.Privmsg(line.Target(), matches[1]+" has "+strconv.Itoa(DB.GetPoints(matches[1]))+" points.")
+		conn.Privmsg(line.Target(), matches[1]+" has "+strconv.Itoa(DB.GetPoints(matches[1]))+Colorize(" rainbow points."))
 	}
 }
