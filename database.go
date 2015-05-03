@@ -68,9 +68,11 @@ func (db *CornerDB) SetPoints(nick string, points int) {
 func (db *CornerDB) AddPoints(nick string, points int) {
 	user := db.GetUser(nick)
 	if user == nil {
-		return
+		db.CreateUser(nick)
+		db.SetPoints(nick, points)
+	} else {
+		db.SetPoints(nick, user.points+points)
 	}
-	db.SetPoints(nick, user.points+points)
 }
 
 // func main() {

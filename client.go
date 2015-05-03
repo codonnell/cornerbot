@@ -15,7 +15,11 @@ type BotConfig struct {
 	Channels []string `json:"channels"`
 	User     string   `json:"user"`
 	Nick     string   `json:"nick"`
+	Owner    string   `json:"owner"`
 }
+
+var DB CornerDB
+var config BotConfig
 
 // var host *string = flag.String("host", "irc.utonet.org", "IRC server")
 // var channel *string = flag.String("channel", "#thecorner", "IRC channel")
@@ -24,11 +28,13 @@ type BotConfig struct {
 func main() {
 	file, _ := os.Open("conf.json")
 	decoder := json.NewDecoder(file)
-	config := BotConfig{}
+	config = BotConfig{}
 	err := decoder.Decode(&config)
 	if err != nil {
 		log.Fatal(err)
 	}
+	DB = CornerDB{Connect()}
+	defer DB.db.Close()
 
 	// create new IRC connection
 	c := irc.SimpleClient(config.User, config.Nick)

@@ -2,5 +2,6 @@
     "host": "irc.freenode.net",
     "channels": ["#cornerbot", "#cornerbottest"],
     "user": "cornerbot-test",
-    "nick": "cornerbot-test"
+    "nick": "cornerbot-test",
+    "owner": "foo"
 }

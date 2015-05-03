@@ -1,13 +1,15 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"regexp"
 	"strings"
 
 	irc "github.com/fluffle/goirc/client"
 )
 
+// NOTE: Do not call this function synchronously from a handler; it will freeze
+// the bot.
 func isIdentified(conn *irc.Conn, nick string) bool {
 	authChan := make(chan bool, 1)
 	handler := conn.HandleFunc("notice", func(conn *irc.Conn, line *irc.Line) {

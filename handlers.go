@@ -10,6 +10,8 @@ import (
 )
 
 var botHandlers = []irc.HandlerFunc{
+	AddPointsHandler,
+	GetPointsHandler,
 	Printer,
 	Heart,
 	RandomPage,
@@ -164,4 +166,46 @@ func RandomPage(conn *irc.Conn, line *irc.Line) {
 		return
 	}
 	conn.Privmsg(line.Target(), url)
+}
+
+func AddPointsHandler(conn *irc.Conn, line *irc.Line) {
+	isAddPoints := regexp.MustCompile(`!addpts (\S+) ([-]?\d+)`)
+	matches := isAddPoints.FindStringSubmatch(line.Text())
+	if len(matches) != 3 {
+		fmt.Println("Failed at matches")
+		fmt.Println(matches)
+		return
+	}
+	if line.Nick != config.Owner {
+		conn.Privmsg(line.Target(), "Hah, nice try imposter!")
+		return
+	}
+	points, err := strconv.ParseInt(matches[2], 10, 64)
+	if err != nil {
+		fmt.Println("Failed at parsing int")
+		return
+	}
+	go AddPointsHelper(conn, line, matches[1], int(points))
+}
+
+func AddPointsHelper(conn *irc.Conn, line *irc.Line, nick string, points int) {
+	if isIdentified(conn, config.Owner) {
+		DB.AddPoints(nick, points)
+		conn.Privmsg(line.Target(), nick+" has "+strconv.Itoa(DB.GetPoints(nick))+" points.")
+	} else {
+		conn.Privmsg(line.Target(), "Nice try... I'm onto you.")
+	}
+}
+
+func GetPointsHandler(conn *irc.Conn, line *irc.Line) {
+	isGetPoints := regexp.MustCompile(`!pts (\S+)`)
+	matches := isGetPoints.FindStringSubmatch(line.Text())
+	if len(matches) != 2 {
+		return
+	}
+	if matches[1] == config.Owner {
+		conn.Privmsg(line.Target(), "You wish you had as many points as "+config.Owner)
+	} else {
+		conn.Privmsg(line.Target(), matches[1]+" has "+strconv.Itoa(DB.GetPoints(matches[1]))+" points.")
+	}
 }
