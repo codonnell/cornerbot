@@ -188,8 +188,12 @@ func AddPointsHandler(conn *irc.Conn, line *irc.Line) {
 
 func AddPointsHelper(conn *irc.Conn, line *irc.Line, nick string, points int) {
 	if isIdentified(conn, config.Owner) {
-		DB.AddPoints(nick, points)
-		conn.Privmsg(line.Target(), nick+" has "+strconv.Itoa(DB.GetPoints(nick))+Colorize(" rainbow points."))
+		if nick == config.Owner {
+			conn.Privmsg(line.Target(), nick+" already has more rainbow points than there are numbers in the universe! Trying to give them more points is futile.")
+		} else {
+			DB.AddPoints(nick, points)
+			conn.Privmsg(line.Target(), nick+" has "+strconv.Itoa(DB.GetPoints(nick))+Colorize(" rainbow points."))
+		}
 	} else {
 		conn.Privmsg(line.Target(), "Nice try... I'm onto you.")
 	}
