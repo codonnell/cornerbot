@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	irc "github.com/fluffle/goirc/client"
 )
@@ -35,6 +36,14 @@ var botHandlers = []irc.HandlerFunc{
 	CreateAction("bearhug", "opens the bear cage and watches as %s gets mauled! AWW! What a big hug!"),
 	CreateAction("pat", "pats %s on head, good jooob!"),
 	CreateAction("defenestrate", "tosses %s out the window!"),
+	CreateAction("pie", "throws a pie in %s's face! Such comedy!"),
+	// CreateAction("taco", "taco taco.. TACO!!"),
+	FriendAction("handsomepants", "%s puts on a pair of handsome pants and does a little boogie dance"),
+	FriendAction("toke", "%s takes a big toke"),
+	FriendAction("psychotica", "%s goes psycho with psychotica"),
+	// FriendAction("cartis^", "what is the ^ even for?"),
+	FriendAction("sullengenie", "%s rubs the magic lamp hoping for a wish, but the genie is too sullen"),
+	FriendAction("rainbowsaurus", "rRra@Aa.wwWWw.rrRr"),
 }
 
 func addBotHandlers(conn *irc.Conn) {
@@ -64,6 +73,20 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 			return
 		} else {
 			conn.Action(line.Target(), fmt.Sprintf(message, matches[1]))
+		}
+	}
+}
+
+func FriendAction(name string, message string) irc.HandlerFunc {
+	return func(conn *irc.Conn, line *irc.Line) {
+		isAction := regexp.MustCompile("!" + name)
+		matches := isAction.FindStringSubmatch(line.Text())
+		if len(matches) != 0 {
+			if strings.ContainsAny(message, "%s") {
+				conn.Privmsg(line.Target(), fmt.Sprintf(message, line.Nick))
+			} else {
+				conn.Privmsg(line.Target(), message)
+			}
 		}
 	}
 }
