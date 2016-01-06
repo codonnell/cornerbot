@@ -22,6 +22,7 @@ var botHandlers = []irc.HandlerFunc{
 	Slap,
 	Lurve,
 	Identified,
+	Cookie,
 	CreateAction("tickle", "ties %s up to the bedpost tightly and takes out a feather. Time for some tickles!"),
 	CreateAction("lick", "jumps on top of %s and gives them a big slobbery lick!"),
 	CreateAction("peck", "sneaks up on %s and delicately pecks them on the cheek"),
@@ -37,13 +38,14 @@ var botHandlers = []irc.HandlerFunc{
 	CreateAction("pat", "pats %s on head, good jooob!"),
 	CreateAction("defenestrate", "tosses %s out the window!"),
 	CreateAction("pie", "throws a pie in %s's face! Such comedy!"),
-	// CreateAction("taco", "taco taco.. TACO!!"),
-	FriendAction("handsomepants", "%s puts on a pair of handsome pants and does a little boogie dance"),
-	FriendAction("toke", "%s takes a big toke"),
-	FriendAction("psychotica", "%s goes psycho with psychotica"),
-	// FriendAction("cartis^", "what is the ^ even for?"),
-	FriendAction("sullengenie", "%s rubs the magic lamp hoping for a wish, but the genie is too sullen"),
-	FriendAction("rainbowsaurus", "rRra@Aa.wwWWw.rrRr"),
+	CreateMessage("taco", "taco taco.. TACO!!"),
+	CreateMessage("handsomepants", "%s puts on a pair of handsome pants and does a little boogie dance"),
+	CreateMessage("toke", "%s takes a big toke"),
+	CreateMessage("psychotica", "%s goes psycho with psychotica"),
+	CreateMessage("cartis^", "what is the ^ even for?"),
+	CreateMessage("sullengenie", "%s rubs the magic lamp hoping for a wish, but the genie is too sullen"),
+	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
+	CreateMessage("emer1cah", "emer1cah, Fuck Yeah! Comin' again to save the motherfuckin' day, yeah!"),
 }
 
 func addBotHandlers(conn *irc.Conn) {
@@ -72,17 +74,21 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 		if len(matches) < 2 {
 			return
 		} else {
-			conn.Action(line.Target(), fmt.Sprintf(message, matches[1]))
+			if strings.Contains(message, "%s") || strings.Contains(message, "%[1]s") {
+				conn.Action(line.Target(), fmt.Sprintf(message, matches[1]))
+			} else {
+				conn.Action(line.Target(), message)
+			}
 		}
 	}
 }
 
-func FriendAction(name string, message string) irc.HandlerFunc {
+func CreateMessage(name string, message string) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
-		isAction := regexp.MustCompile("!" + name)
-		matches := isAction.FindStringSubmatch(line.Text())
-		if len(matches) != 0 {
-			if strings.ContainsAny(message, "%s") {
+		if line.Text() == "!"+name {
+			fmt.Println("name: " + name)
+			fmt.Println("message: " + message)
+			if strings.Contains(message, "%s") {
 				conn.Privmsg(line.Target(), fmt.Sprintf(message, line.Nick))
 			} else {
 				conn.Privmsg(line.Target(), message)
@@ -110,6 +116,22 @@ func IdentifyMsg(conn *irc.Conn, target string, nick string) {
 		conn.Privmsg(target, nick+" is identified.")
 	} else {
 		conn.Privmsg(target, nick+" is not identified.")
+	}
+}
+
+func Cookie(conn *irc.Conn, line *irc.Line) {
+	isCookie := regexp.MustCompile(`!cookie(\s*)(\S*)`)
+	matches := isCookie.FindStringSubmatch(line.Text())
+	// for i, m := range matches {
+	// 	fmt.Println("match " + strconv.Itoa(i) + ": " + m)
+	// }
+	if len(matches) == 0 {
+		return
+	}
+	if matches[2] == "" {
+		conn.Action(line.Target(), "gives you a cookie. but then steals it and eats it!")
+	} else {
+		conn.Action(line.Target(), fmt.Sprintf("gives %s a cookie.", matches[2]))
 	}
 }
 
