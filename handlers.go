@@ -95,6 +95,76 @@ func CreateMessage(name string, message string) irc.HandlerFunc {
 	}
 }
 
+func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
+	isAddAction := regexp.MustCompile(`!addaction (\S+) (.+)`)
+	isAddMessage := regexp.MustCompile(`!addmessage (\S+) (.+)`)
+	actionMatches := isAddAction.FindStringSubmatch(line.Text())
+	messageMatches := isAddMessage.FindStringSubmatch(line.Text())
+	if len(actionMatches) == 0 && len(messageMatches) == 0 {
+		return
+	}
+	var commandFile, name, message string
+	var handler irc.HandlerFunc
+	if len(actionMatches) > 0 {
+		commandFile = "actions.txt"
+		name = actionMatches[1]
+		message = actionMatches[2]
+		handler = CreateAction(name, message)
+	} else {
+		commandFile = "messages.txt"
+		name = messageMatches[1]
+		message = messageMatches[2]
+		handler = CreateMessage(name, message)
+	}
+	go func() {
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner){
+			command := Command{name, message}
+			if _, exists := keyedHandlers[command.Name]; exists {
+				conn.Privmsg(line.Target(), "The "+command.Name+" command already exists. You must delete it with !delaction "+command.Name)
+				return
+			}
+			fmt.Println("Adding action with command " + command.Name + " and message " + command.Message)
+			conn.Privmsg(line.Target(), "The "+command.Name+" action has been added")
+			AddCommandToFile(command, commandFile)
+			AddKeyedHandler(conn, command.Name, handler)
+		} else {
+			conn.Privmsg(line.Target(), "Only the bot owner can add commands.")
+		}
+	}()
+}
+
+func DeleteCommandHandler(conn *irc.Conn, line *irc.Line) {
+	isDelAction := regexp.MustCompile(`!delaction (\S+)`)
+	isDelMessage := regexp.MustCompile(`!delmessage (\S+)`)
+	actionMatches := isDelAction.FindStringSubmatch(line.Text())
+	messageMatches := isDelMessage.FindStringSubmatch(line.Text())
+	if len(actionMatches) == 0 && len(messageMatches) == 0 {
+		return
+	}
+	var commandFile, command string
+	if len(actionMatches) > 0 {
+		commandFile = "actions.txt"
+		command = actionMatches[1]
+	} else {
+		commandFile = "messages.txt"
+		command = messageMatches[1]
+	}
+	go func() {
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner){
+			if remover, exists := keyedHandlers[command]; exists {
+				DeleteCommandFromFile(command, commandFile)
+				remover.Remove()
+				delete(keyedHandlers, command)
+				conn.Privmsg(line.Target(), "The "+command+" command has been deleted")
+			} else {
+				conn.Privmsg(line.Target(), "The "+command+" command does not exist or cannot be deleted.")
+			}
+		} else {
+			conn.Privmsg(line.Target(), "Only the bot owner can delete commands.")
+		}
+	}()
+}
+
 func Printer(conn *irc.Conn, line *irc.Line) {
 	fmt.Println(line.Target(), ": ", line.Text())
 }
