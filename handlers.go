@@ -23,32 +23,23 @@ var botHandlers = []irc.HandlerFunc{
 	Lurve,
 	Identified,
 	Cookie,
-	CreateAction("tickle", "ties %s up to the bedpost tightly and takes out a feather. Time for some tickles!"),
-	CreateAction("lick", "jumps on top of %s and gives them a big slobbery lick!"),
-	CreateAction("peck", "sneaks up on %s and delicately pecks them on the cheek"),
-	CreateAction("paint", "pulls out the paint set as %s lays naked on the couch posing"),
-	CreateAction("landlust", "lusts %s!"),
-	CreateAction("beer", "goes to the fridge, grabs a fresh bottle, pops the cap off and hands it to %s. Enjoy!"),
-	CreateAction("shuggle", "shuggles %s!"),
-	CreateAction("pinch", "sneaks behind %s and gives a little pinch on the butt!"),
-	CreateAction("snuggle", "curls up next to %s and snuggles closely"),
-	CreateAction("pillowfight", "waits until they are sleeping and SMOTHERS %s WITH A PILLOW!"),
-	CreateAction("encourage", "cheers %[1]s on. GOOOOOO %[1]s! YOU GOT DIS!"),
-	CreateAction("bearhug", "opens the bear cage and watches as %s gets mauled! AWW! What a big hug!"),
-	CreateAction("pat", "pats %s on head, good jooob!"),
-	CreateAction("defenestrate", "tosses %s out the window!"),
-	CreateAction("pie", "throws a pie in %s's face! Such comedy!"),
 	CreateMessage("taco", "taco taco.. TACO!!"),
 	CreateMessage("handsomepants", "%s puts on a pair of handsome pants and does a little boogie dance"),
 	CreateMessage("toke", "%s takes a big toke"),
 	CreateMessage("psychotica", "%s goes psycho with psychotica"),
 	CreateMessage("cartis^", "what is the ^ even for?"),
 	CreateMessage("sullengenie", "%s rubs the magic lamp hoping for a wish, but the genie is too sullen"),
-	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 	CreateMessage("emer1cah", "emer1cah, Fuck Yeah! Comin' again to save the motherfuckin' day, yeah!"),
+	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
 func addBotHandlers(conn *irc.Conn) {
+	for _, a := range ReadActions() {
+		botHandlers = append(botHandlers, CreateAction(a.Command, a.Message))
+	}
+	for _, m := range ReadMessages() {
+		botHandlers = append(botHandlers, CreateAction(m.Command, m.Message))
+	}
 	for _, h := range botHandlers {
 		conn.HandleFunc("privmsg", h)
 	}
