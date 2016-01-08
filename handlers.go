@@ -10,6 +10,11 @@ import (
 	irc "github.com/fluffle/goirc/client"
 )
 
+type KeyedHandler struct {
+	Key     string
+	Handler irc.HandlerFunc
+}
+
 var botHandlers = []irc.HandlerFunc{
 	AddPointsHandler,
 	GetPointsHandler,
@@ -23,22 +28,24 @@ var botHandlers = []irc.HandlerFunc{
 	Lurve,
 	Identified,
 	Cookie,
-	CreateMessage("taco", "taco taco.. TACO!!"),
-	CreateMessage("handsomepants", "%s puts on a pair of handsome pants and does a little boogie dance"),
-	CreateMessage("toke", "%s takes a big toke"),
-	CreateMessage("psychotica", "%s goes psycho with psychotica"),
-	CreateMessage("cartis^", "what is the ^ even for?"),
-	CreateMessage("sullengenie", "%s rubs the magic lamp hoping for a wish, but the genie is too sullen"),
-	CreateMessage("emer1cah", "emer1cah, Fuck Yeah! Comin' again to save the motherfuckin' day, yeah!"),
+	AddCommandHandler,
+	DeleteCommandHandler,
 	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
+var keyedHandlers = make(map[string]irc.Remover)
+
+// NOTE: Do not call this synchronously from a handler. It will freeze the bot.
+func AddKeyedHandler(conn *irc.Conn, key string, handler irc.HandlerFunc) {
+	keyedHandlers[key] = conn.HandleFunc("privmsg", handler)
+}
+
 func addBotHandlers(conn *irc.Conn) {
-	for _, a := range ReadActions() {
-		botHandlers = append(botHandlers, CreateAction(a.Command, a.Message))
+	for _, a := range ReadCommandsFromFile("actions.txt") {
+		AddKeyedHandler(conn, a.Name, CreateAction(a.Name, a.Message))
 	}
-	for _, m := range ReadMessages() {
-		botHandlers = append(botHandlers, CreateAction(m.Command, m.Message))
+	for _, m := range ReadCommandsFromFile("messages.txt") {
+		AddKeyedHandler(conn, m.Name, CreateMessage(m.Name, m.Message))
 	}
 	for _, h := range botHandlers {
 		conn.HandleFunc("privmsg", h)
@@ -113,9 +120,6 @@ func IdentifyMsg(conn *irc.Conn, target string, nick string) {
 func Cookie(conn *irc.Conn, line *irc.Line) {
 	isCookie := regexp.MustCompile(`!cookie(\s*)(\S*)`)
 	matches := isCookie.FindStringSubmatch(line.Text())
-	// for i, m := range matches {
-	// 	fmt.Println("match " + strconv.Itoa(i) + ": " + m)
-	// }
 	if len(matches) == 0 {
 		return
 	}
