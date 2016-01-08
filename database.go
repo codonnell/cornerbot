@@ -17,7 +17,7 @@ type User struct {
 }
 
 func Connect() *sql.DB {
-	db, err := sql.Open("sqlite3", "./users.db")
+	db, err := sql.Open("sqlite3", "./bot.db")
 	checkErr(err)
 	return db
 }
