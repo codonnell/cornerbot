@@ -83,11 +83,13 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 
 func CreateMessage(name string, message string) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
-		if line.Text() == "!"+name {
+		isMessage := regexp.MustCompile("!" + name + " (\\S+)")
+		matches := isMessage.FindStringSubmatch(line.Text())
+		if len(matches) > 0 {
 			fmt.Println("name: " + name)
 			fmt.Println("message: " + message)
 			if strings.Contains(message, "%s") {
-				conn.Privmsg(line.Target(), fmt.Sprintf(message, line.Nick))
+				conn.Privmsg(line.Target(), fmt.Sprintf(message, matches[1]))
 			} else {
 				conn.Privmsg(line.Target(), message)
 			}
