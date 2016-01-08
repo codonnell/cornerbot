@@ -16,6 +16,12 @@ type User struct {
 	points int
 }
 
+type Command struct {
+	Name    string
+	Message string
+	Type string
+}
+
 func Connect() *sql.DB {
 	db, err := sql.Open("sqlite3", "./bot.db")
 	checkErr(err)
@@ -73,6 +79,52 @@ func (db *CornerDB) AddPoints(nick string, points int) {
 	} else {
 		db.SetPoints(nick, user.points+points)
 	}
+}
+
+func (db *CornerDB) GetCommand(name string) *Command {
+	rows, err := db.db.Query("select name,message,type from commands where name = ?", name)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	defer rows.Close()
+	var dbName, dbMessage, dbType string
+	if rows.Next() {
+		err = rows.Scan(&dbName, &dbMessage, &dbType)
+		checkErr(err)
+	} else {
+		return nil
+	}
+	return &Command{dbName, dbMessage, dbType}
+}
+
+func (db *CornerDB) AddCommand(command Command) bool {
+	if db.GetCommand(command.Name) != nil {
+		return false
+	}
+	_, err := db.db.Exec("insert into commands(name, message, type) values(?, ?, ?)", command.Name, command.Message, command.Type)
+	return (err == nil)
+}
+
+func (db *CornerDB) AllCommands(cmdType string) []Command {
+	rows, err := db.db.Query("select name,message from commands where type = ?", cmdType)
+	checkErr(err)
+	defer rows.Close()
+	var name, message string
+	commands := []Command{}
+	for rows.Next() {
+		err = rows.Scan(&name, &message)
+		checkErr(err)
+		commands = append(commands, Command{name, message, cmdType})
+	}
+	err = rows.Err()
+	checkErr(err)
+	return commands
+}
+
+func (db *CornerDB) DeleteCommand(name string) bool {
+	_, err := db.db.Exec("delete from commands where name = ?", name)
+	return (err == nil)
 }
 
 // func main() {

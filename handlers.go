@@ -41,10 +41,10 @@ func AddKeyedHandler(conn *irc.Conn, key string, handler irc.HandlerFunc) {
 }
 
 func addBotHandlers(conn *irc.Conn) {
-	for _, a := range ReadCommandsFromFile("actions.txt") {
+	for _, a := range DB.AllCommands("action") {
 		AddKeyedHandler(conn, a.Name, CreateAction(a.Name, a.Message))
 	}
-	for _, m := range ReadCommandsFromFile("messages.txt") {
+	for _, m := range DB.AllCommands("message") {
 		AddKeyedHandler(conn, m.Name, CreateMessage(m.Name, m.Message))
 	}
 	for _, h := range botHandlers {
@@ -103,29 +103,29 @@ func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
 		return
 	}
-	var commandFile, name, message string
+	var cmdType, name, message string
 	var handler irc.HandlerFunc
 	if len(actionMatches) > 0 {
-		commandFile = "actions.txt"
+		cmdType = "action"
 		name = actionMatches[1]
 		message = actionMatches[2]
 		handler = CreateAction(name, message)
 	} else {
-		commandFile = "messages.txt"
+		cmdType = "message"
 		name = messageMatches[1]
 		message = messageMatches[2]
 		handler = CreateMessage(name, message)
 	}
 	go func() {
-		if line.Nick == config.Owner && isIdentified(conn, config.Owner){
-			command := Command{name, message}
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner) {
+			command := Command{name, message, cmdType}
 			if _, exists := keyedHandlers[command.Name]; exists {
 				conn.Privmsg(line.Target(), "The "+command.Name+" command already exists. You must delete it with !delaction "+command.Name)
 				return
 			}
 			fmt.Println("Adding action with command " + command.Name + " and message " + command.Message)
 			conn.Privmsg(line.Target(), "The "+command.Name+" action has been added")
-			AddCommandToFile(command, commandFile)
+			DB.AddCommand(Command{name, message, cmdType})
 			AddKeyedHandler(conn, command.Name, handler)
 		} else {
 			conn.Privmsg(line.Target(), "Only the bot owner can add commands.")
@@ -141,18 +141,16 @@ func DeleteCommandHandler(conn *irc.Conn, line *irc.Line) {
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
 		return
 	}
-	var commandFile, command string
+	var command string
 	if len(actionMatches) > 0 {
-		commandFile = "actions.txt"
 		command = actionMatches[1]
 	} else {
-		commandFile = "messages.txt"
 		command = messageMatches[1]
 	}
 	go func() {
-		if line.Nick == config.Owner && isIdentified(conn, config.Owner){
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner) {
 			if remover, exists := keyedHandlers[command]; exists {
-				DeleteCommandFromFile(command, commandFile)
+				DB.DeleteCommand(command)
 				remover.Remove()
 				delete(keyedHandlers, command)
 				conn.Privmsg(line.Target(), "The "+command+" command has been deleted")
