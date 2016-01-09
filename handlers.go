@@ -89,7 +89,7 @@ func CreateMessage(name string, message string) irc.HandlerFunc {
 			fmt.Println("name: " + name)
 			fmt.Println("message: " + message)
 			if strings.Contains(message, "%s") {
-				conn.Privmsg(line.Target(), fmt.Sprintf(message, matches[1]))
+				conn.Privmsg(line.Target(), fmt.Sprintf(message, line.Nick))
 			} else {
 				conn.Privmsg(line.Target(), message)
 			}
