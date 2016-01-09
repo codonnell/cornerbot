@@ -30,6 +30,8 @@ var botHandlers = []irc.HandlerFunc{
 	Cookie,
 	AddCommandHandler,
 	DeleteCommandHandler,
+	Say,
+	ListChannels,
 	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
@@ -185,6 +187,44 @@ func IdentifyMsg(conn *irc.Conn, target string, nick string) {
 	} else {
 		conn.Privmsg(target, nick+" is not identified.")
 	}
+}
+
+func ListChannels(conn *irc.Conn, line *irc.Line) {
+	if line.Text() != "!listchannels" {
+		return
+	}
+	go func() {
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner) {
+			var channels []string
+			for i, c := range config.Channels {
+				channels = append(channels, fmt.Sprintf("%d: %s", i, c))
+			}
+			conn.Privmsg(line.Target(), strings.Join(channels, ", "))
+		}
+	}()
+}
+
+func Say(conn *irc.Conn, line *irc.Line) {
+	isSay := regexp.MustCompile(`!say (\d+) (.+)`)
+	matches := isSay.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	go func() {
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner) {
+			idx, err := strconv.Atoi(matches[1])
+			if err != nil {
+				conn.Privmsg(line.Target(), "Error parsing channel number")
+				return
+			}
+			if idx >= 0 && idx < len(config.Channels) {
+				ircChan := config.Channels[idx]
+				conn.Privmsg(ircChan, matches[2])
+			} else {
+				conn.Privmsg(line.Target(), "I'm not in a channel with that number.")
+			}
+		}
+	}()
 }
 
 func Cookie(conn *irc.Conn, line *irc.Line) {
