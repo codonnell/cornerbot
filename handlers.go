@@ -69,7 +69,7 @@ func Colorize(text string) string {
 
 func CreateAction(name string, message string) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
-		isAction := regexp.MustCompile("!" + name + " (\\S+)")
+		isAction := regexp.MustCompile("^!" + name + " (\\S+)")
 		matches := isAction.FindStringSubmatch(line.Text())
 		if len(matches) < 2 {
 			return
@@ -85,7 +85,7 @@ func CreateAction(name string, message string) irc.HandlerFunc {
 
 func CreateMessage(name string, message string) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
-		isMessage := regexp.MustCompile("!" + name + " ?(\\S+)?")
+		isMessage := regexp.MustCompile("^!" + name + " ?(\\S+)?")
 		matches := isMessage.FindStringSubmatch(line.Text())
 		if len(matches) > 0 {
 			fmt.Println("name: " + name)
@@ -100,8 +100,8 @@ func CreateMessage(name string, message string) irc.HandlerFunc {
 }
 
 func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
-	isAddAction := regexp.MustCompile(`!addaction (\S+) (.+)`)
-	isAddMessage := regexp.MustCompile(`!addmessage (\S+) (.+)`)
+	isAddAction := regexp.MustCompile(`!^addaction (\S+) (.+)`)
+	isAddMessage := regexp.MustCompile(`!^addmessage (\S+) (.+)`)
 	actionMatches := isAddAction.FindStringSubmatch(line.Text())
 	messageMatches := isAddMessage.FindStringSubmatch(line.Text())
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
@@ -138,8 +138,8 @@ func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
 }
 
 func DeleteCommandHandler(conn *irc.Conn, line *irc.Line) {
-	isDelAction := regexp.MustCompile(`!delaction (\S+)`)
-	isDelMessage := regexp.MustCompile(`!delmessage (\S+)`)
+	isDelAction := regexp.MustCompile(`!^delaction (\S+)`)
+	isDelMessage := regexp.MustCompile(`!^delmessage (\S+)`)
 	actionMatches := isDelAction.FindStringSubmatch(line.Text())
 	messageMatches := isDelMessage.FindStringSubmatch(line.Text())
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
@@ -172,7 +172,7 @@ func Printer(conn *irc.Conn, line *irc.Line) {
 }
 
 func Identified(conn *irc.Conn, line *irc.Line) {
-	isIdentify := regexp.MustCompile(`!identified (\S+)`)
+	isIdentify := regexp.MustCompile(`!^identified (\S+)`)
 	matches := isIdentify.FindStringSubmatch(line.Text())
 	if len(matches) == 2 {
 		fmt.Println("Calls isIdentified.")
@@ -205,7 +205,7 @@ func ListChannels(conn *irc.Conn, line *irc.Line) {
 }
 
 func Say(conn *irc.Conn, line *irc.Line) {
-	isSay := regexp.MustCompile(`!say (\d+) (.+)`)
+	isSay := regexp.MustCompile(`^!say (\d+) (.+)`)
 	matches := isSay.FindStringSubmatch(line.Text())
 	if len(matches) == 0 {
 		return
@@ -228,7 +228,7 @@ func Say(conn *irc.Conn, line *irc.Line) {
 }
 
 func Cookie(conn *irc.Conn, line *irc.Line) {
-	isCookie := regexp.MustCompile(`!cookie(\s*)(\S*)`)
+	isCookie := regexp.MustCompile(`!^cookie(\s*)(\S*)`)
 	matches := isCookie.FindStringSubmatch(line.Text())
 	if len(matches) == 0 {
 		return
@@ -261,7 +261,7 @@ func Lurve(conn *irc.Conn, line *irc.Line) {
 }
 
 func Glitter(conn *irc.Conn, line *irc.Line) {
-	containsGlitter := regexp.MustCompile(`!glitter`)
+	containsGlitter := regexp.MustCompile(`^!glitter`)
 	if containsGlitter.MatchString(line.Text()) {
 		conn.Action(line.Target(), "throws some "+Colorize("¸¸.•*¨*•¸¸.•*¨*• rainbow glitter ¸¸.•*¨*•¸¸.•*¨*•")+" into the air!")
 	}
@@ -275,7 +275,7 @@ func Heart(conn *irc.Conn, line *irc.Line) {
 }
 
 func Hug(conn *irc.Conn, line *irc.Line) {
-	isHug := regexp.MustCompile(`!hug (\S+)`)
+	isHug := regexp.MustCompile(`!^hug (\S+)`)
 	matches := isHug.FindStringSubmatch(line.Text())
 	if len(matches) < 2 {
 		return
@@ -288,7 +288,7 @@ func Hug(conn *irc.Conn, line *irc.Line) {
 }
 
 func Slap(conn *irc.Conn, line *irc.Line) {
-	isSlap := regexp.MustCompile(`!slap (\S)+`)
+	isSlap := regexp.MustCompile(`^!slap (\S)+`)
 	matches := isSlap.FindStringSubmatch(line.Text())
 	if len(matches) > 0 {
 		conn.Action(line.Target(), "bops "+line.Nick+" on the head and reminds them that violence is bad!")
@@ -296,7 +296,7 @@ func Slap(conn *irc.Conn, line *irc.Line) {
 }
 
 func SelfEsteem(conn *irc.Conn, line *irc.Line) {
-	isEsteem := regexp.MustCompile(`!selfesteem`)
+	isEsteem := regexp.MustCompile(`^!selfesteem`)
 	matches := isEsteem.FindStringSubmatch(line.Text())
 	if len(matches) > 0 {
 		conn.Privmsg(line.Target(), "GOOOOOO "+line.Nick+"! YOU GOT DIS!")
@@ -319,7 +319,7 @@ func RandomPage(conn *irc.Conn, line *irc.Line) {
 }
 
 func AddPointsHandler(conn *irc.Conn, line *irc.Line) {
-	isAddPoints := regexp.MustCompile(`!addpts (\S+) ([-]?\d+)`)
+	isAddPoints := regexp.MustCompile(`^!addpts (\S+) ([-]?\d+)`)
 	matches := isAddPoints.FindStringSubmatch(line.Text())
 	if len(matches) != 3 {
 		return
@@ -350,7 +350,7 @@ func AddPointsHelper(conn *irc.Conn, line *irc.Line, nick string, points int) {
 }
 
 func GetPointsHandler(conn *irc.Conn, line *irc.Line) {
-	isGetPoints := regexp.MustCompile(`!pts (\S+)`)
+	isGetPoints := regexp.MustCompile(`^!pts (\S+)`)
 	matches := isGetPoints.FindStringSubmatch(line.Text())
 	if len(matches) != 2 {
 		return
