@@ -100,8 +100,8 @@ func CreateMessage(name string, message string) irc.HandlerFunc {
 }
 
 func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
-	isAddAction := regexp.MustCompile(`!^addaction (\S+) (.+)`)
-	isAddMessage := regexp.MustCompile(`!^addmessage (\S+) (.+)`)
+	isAddAction := regexp.MustCompile(`^!addaction (\S+) (.+)`)
+	isAddMessage := regexp.MustCompile(`^!addmessage (\S+) (.+)`)
 	actionMatches := isAddAction.FindStringSubmatch(line.Text())
 	messageMatches := isAddMessage.FindStringSubmatch(line.Text())
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
@@ -138,8 +138,8 @@ func AddCommandHandler(conn *irc.Conn, line *irc.Line) {
 }
 
 func DeleteCommandHandler(conn *irc.Conn, line *irc.Line) {
-	isDelAction := regexp.MustCompile(`!^delaction (\S+)`)
-	isDelMessage := regexp.MustCompile(`!^delmessage (\S+)`)
+	isDelAction := regexp.MustCompile(`^!delaction (\S+)`)
+	isDelMessage := regexp.MustCompile(`^!delmessage (\S+)`)
 	actionMatches := isDelAction.FindStringSubmatch(line.Text())
 	messageMatches := isDelMessage.FindStringSubmatch(line.Text())
 	if len(actionMatches) == 0 && len(messageMatches) == 0 {
