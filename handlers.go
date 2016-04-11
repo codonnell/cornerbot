@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"math/rand"
 
 	irc "github.com/fluffle/goirc/client"
 )
@@ -32,6 +33,7 @@ var botHandlers = []irc.HandlerFunc{
 	DeleteCommandHandler,
 	Say,
 	ListChannels,
+	Yes,
 	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
@@ -300,6 +302,19 @@ func SelfEsteem(conn *irc.Conn, line *irc.Line) {
 	matches := isEsteem.FindStringSubmatch(line.Text())
 	if len(matches) > 0 {
 		conn.Privmsg(line.Target(), "GOOOOOO "+line.Nick+"! YOU GOT DIS!")
+	}
+}
+
+func Yes(conn *irc.Conn, line *irc.Line) {
+	isYes := regexp.MustCompile(`^!yes`)
+	matches := isYes.FindStringSubmatch(line.Text())
+	if len(matches) > 0 {
+		if line.Nick == "rainbowsaurus" {
+			conn.Privmsg(line.Target(), "no")
+		} else {
+			messages := []string{"yes", "hellz to the yes", "so much yes", "no", "possibly", "maybe", "i guess so", "yes yes YES"}
+			conn.Privmsg(line.Target(), messages[rand.Intn(len(messages))])
+		}
 	}
 }
 
