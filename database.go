@@ -127,13 +127,13 @@ func (db *CornerDB) DeleteCommand(name string) bool {
 	return (err == nil)
 }
 
-func (db *CornerDB) AddQuote(quote string) bool {
-	_, err := db.db.Exec("insert into quotes(quote) values(?)", quote)
+func (db *CornerDB) AddQuote(quote string, channel string) bool {
+	_, err := db.db.Exec("insert into quotes(quote,channel) values(?,?)", quote, channel)
 	return (err == nil)
 }
 
-func (db *CornerDB) GetQuote(id int) *string {
-	rows, err := db.db.Query("select quote from quotes where rowid = ?", id)
+func (db *CornerDB) GetQuote(id int, channel string) *string {
+	rows, err := db.db.Query("select quote from quotes where rowid = ? and channel = ?", id, channel)
 	if err != nil {
 		log.Fatal(err)
 		return nil
@@ -149,8 +149,8 @@ func (db *CornerDB) GetQuote(id int) *string {
 	return &quote
 }
 
-func (db *CornerDB) SearchQuotes(search string) []int {
-	rows, err := db.db.Query("select rowid from quotes where quote match ?", search)
+func (db *CornerDB) SearchQuotes(search string, channel string) []int {
+	rows, err := db.db.Query("select rowid from quotes where quote match ? and channel = ?", search, channel)
 	checkErr(err)
 	defer rows.Close()
 	var rowid int
@@ -165,12 +165,12 @@ func (db *CornerDB) SearchQuotes(search string) []int {
 	return ids
 }
 
-func (db *CornerDB) DeleteQuote(id int) bool {
-	quote := db.GetQuote(id)
+func (db *CornerDB) DeleteQuote(id int, channel string) bool {
+	quote := db.GetQuote(id, channel)
 	if quote == nil {
 		return false
 	}
-	_, err := db.db.Exec("delete from quotes where rowid = ?", id)
+	_, err := db.db.Exec("delete from quotes where rowid = ? and channel = ?", id, channel)
 	return (err == nil)
 }
 

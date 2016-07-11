@@ -391,7 +391,7 @@ func AddQuote(conn *irc.Conn, line *irc.Line) {
 		conn.Action(line.Target(), "Error adding quote. That which has no words cannot be quoted.")
 		return
 	}
-	DB.AddQuote(matches[2])
+	DB.AddQuote(matches[2], line.Target())
 	conn.Privmsg(line.Target(), fmt.Sprintf("Quote added: %s", matches[2]))
 }
 
@@ -405,7 +405,7 @@ func FindQuotes(conn *irc.Conn, line *irc.Line) {
 		conn.Action(line.Target(), "Error finding quotes. That which has no words cannot be found.")
 		return
 	}
-	ids := DB.SearchQuotes(matches[2])
+	ids := DB.SearchQuotes(matches[2], line.Target())
 	if len(ids) == 0 {
 		conn.Privmsg(line.Target(), "No quotes found")
 		return
@@ -428,7 +428,7 @@ func GetQuote(conn *irc.Conn, line *irc.Line) {
 		conn.Privmsg(line.Target(), "Syntax: !quote ID")
 		return
 	}
-	quote := DB.GetQuote(id)
+	quote := DB.GetQuote(id, line.Target())
 	if quote == nil {
 		conn.Privmsg(line.Target(), fmt.Sprintf("No quote with id %d", id))
 	} else {
@@ -447,7 +447,7 @@ func DeleteQuote(conn *irc.Conn, line *irc.Line) {
 		conn.Privmsg(line.Target(), "Syntax: !delquote ID")
 		return
 	}
-	success := DB.DeleteQuote(id)
+	success := DB.DeleteQuote(id, line.Target())
 	if success {
 		conn.Privmsg(line.Target(), fmt.Sprintf("Quote %d deleted", id))
 	} else {
