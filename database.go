@@ -127,6 +127,53 @@ func (db *CornerDB) DeleteCommand(name string) bool {
 	return (err == nil)
 }
 
+func (db *CornerDB) AddQuote(quote string) bool {
+	_, err := db.db.Exec("insert into quotes(quote) values(?)", quote)
+	return (err == nil)
+}
+
+func (db *CornerDB) GetQuote(id int) *string {
+	rows, err := db.db.Query("select quote from quotes where rowid = ?", id)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	defer rows.Close()
+	var quote string
+	if rows.Next() {
+		err = rows.Scan(&quote)
+		checkErr(err)
+	} else {
+		return nil
+	}
+	return &quote
+}
+
+func (db *CornerDB) SearchQuotes(search string) []int {
+	rows, err := db.db.Query("select rowid from quotes where quote match ?", search)
+	checkErr(err)
+	defer rows.Close()
+	var rowid int
+	ids := []int{}
+	for rows.Next() {
+		err = rows.Scan(&rowid)
+		checkErr(err)
+		ids = append(ids, rowid)
+	}
+	err = rows.Err()
+	checkErr(err)
+	return ids
+}
+
+func (db *CornerDB) DeleteQuote(id int) bool {
+	quote := db.GetQuote(id)
+	if quote == nil {
+		return false
+	}
+	_, err := db.db.Exec("delete from quotes where rowid = ?", id)
+	return (err == nil)
+}
+
 // func main() {
 // 	db := CornerDB{Connect()}
 // 	defer db.db.Close()

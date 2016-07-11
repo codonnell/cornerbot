@@ -34,6 +34,10 @@ var botHandlers = []irc.HandlerFunc{
 	Say,
 	ListChannels,
 	Yes,
+	AddQuote,
+	FindQuotes,
+	GetQuote,
+	DeleteQuote,
 	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
@@ -230,7 +234,7 @@ func Say(conn *irc.Conn, line *irc.Line) {
 }
 
 func Cookie(conn *irc.Conn, line *irc.Line) {
-	isCookie := regexp.MustCompile(`!^cookie(\s*)(\S*)`)
+	isCookie := regexp.MustCompile(`^!cookie(\s*)(\S*)`)
 	matches := isCookie.FindStringSubmatch(line.Text())
 	if len(matches) == 0 {
 		return
@@ -374,5 +378,79 @@ func GetPointsHandler(conn *irc.Conn, line *irc.Line) {
 		conn.Privmsg(line.Target(), "You wish you had as many "+Colorize("rainbow points")+" as "+config.Owner)
 	} else {
 		conn.Privmsg(line.Target(), matches[1]+" has "+strconv.Itoa(DB.GetPoints(matches[1]))+Colorize(" rainbow points."))
+	}
+}
+
+func AddQuote(conn *irc.Conn, line *irc.Line) {
+	isAddQuote := regexp.MustCompile(`^!addquote(\s+)(.*)`)
+	matches := isAddQuote.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	if matches[2] == "" {
+		conn.Action(line.Target(), "Error adding quote. That which has no words cannot be quoted.")
+		return
+	}
+	DB.AddQuote(matches[2])
+	conn.Privmsg(line.Target(), fmt.Sprintf("Quote added: %s", matches[2]))
+}
+
+func FindQuotes(conn *irc.Conn, line *irc.Line) {
+	isFindQuote := regexp.MustCompile(`^!findquotes(\s+)(.*)`)
+	matches := isFindQuote.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	if matches[2] == "" {
+		conn.Action(line.Target(), "Error finding quotes. That which has no words cannot be found.")
+		return
+	}
+	ids := DB.SearchQuotes(matches[2])
+	if len(ids) == 0 {
+		conn.Privmsg(line.Target(), "No quotes found")
+		return
+	}
+	idStrs := []string{}
+	for _, id := range ids {
+		idStrs = append(idStrs, strconv.Itoa(id))
+	}
+	conn.Privmsg(line.Target(), fmt.Sprintf("Quotes found: %s", strings.Join(idStrs, ", ")))
+}
+
+func GetQuote(conn *irc.Conn, line *irc.Line) {
+	isGetQuote := regexp.MustCompile(`^!quote (\d+)`)
+	matches := isGetQuote.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	id, err := strconv.Atoi(matches[1])
+	if err != nil {
+		conn.Privmsg(line.Target(), "Syntax: !quote ID")
+		return
+	}
+	quote := DB.GetQuote(id)
+	if quote == nil {
+		conn.Privmsg(line.Target(), fmt.Sprintf("No quote with id %d", id))
+	} else {
+		conn.Privmsg(line.Target(), *quote)
+	}
+}
+
+func DeleteQuote(conn *irc.Conn, line *irc.Line) {
+	isDelQuote := regexp.MustCompile(`^!delquote (\d+)`)
+	matches := isDelQuote.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	id, err := strconv.Atoi(matches[1])
+	if err != nil {
+		conn.Privmsg(line.Target(), "Syntax: !delquote ID")
+		return
+	}
+	success := DB.DeleteQuote(id)
+	if success {
+		conn.Privmsg(line.Target(), fmt.Sprintf("Quote %d deleted", id))
+	} else {
+		conn.Privmsg(line.Target(), fmt.Sprintf("Error deleting quote %d. Does it exist?", id))
 	}
 }
