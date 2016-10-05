@@ -32,6 +32,7 @@ var botHandlers = []irc.HandlerFunc{
 	AddCommandHandler,
 	DeleteCommandHandler,
 	Say,
+	Action,
 	ListChannels,
 	Yes,
 	AddQuote,
@@ -226,6 +227,29 @@ func Say(conn *irc.Conn, line *irc.Line) {
 			if idx >= 0 && idx < len(config.Channels) {
 				ircChan := config.Channels[idx]
 				conn.Privmsg(ircChan, matches[2])
+			} else {
+				conn.Privmsg(line.Target(), "I'm not in a channel with that number.")
+			}
+		}
+	}()
+}
+
+func Action(conn *irc.Conn, line *irc.Line) {
+	isSay := regexp.MustCompile(`^!me (\d+) (.+)`)
+	matches := isSay.FindStringSubmatch(line.Text())
+	if len(matches) == 0 {
+		return
+	}
+	go func() {
+		if line.Nick == config.Owner && isIdentified(conn, config.Owner) {
+			idx, err := strconv.Atoi(matches[1])
+			if err != nil {
+				conn.Privmsg(line.Target(), "Error parsing channel number")
+				return
+			}
+			if idx >= 0 && idx < len(config.Channels) {
+				ircChan := config.Channels[idx]
+				conn.Action(ircChan, matches[2])
 			} else {
 				conn.Privmsg(line.Target(), "I'm not in a channel with that number.")
 			}
