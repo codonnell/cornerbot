@@ -35,10 +35,10 @@ var botHandlers = []irc.HandlerFunc{
 	Action,
 	ListChannels,
 	Yes,
-	AddQuote,
-	FindQuotes,
-	GetQuote,
-	DeleteQuote,
+	// AddQuote,
+	// FindQuotes,
+	// GetQuote,
+	// DeleteQuote,
 	CreateMessage("rainbowsaurus", Colorize("rRra@Aa.wwWWw.rrRr")),
 }
 
