@@ -49,6 +49,11 @@ func AddKeyedHandler(conn *irc.Conn, key string, handler irc.HandlerFunc) {
 	keyedHandlers[key] = conn.HandleFunc("privmsg", handler)
 }
 
+func RemoveKeyedHandler(key string) {
+	keyedHandlers[key].Remove()
+	delete(keyedHandlers, key)
+}
+
 func addBotHandlers(conn *irc.Conn) {
 	for _, a := range DB.AllCommands("action") {
 		AddKeyedHandler(conn, a.Name, CreateAction(a.Name, a.Message))
@@ -60,6 +65,15 @@ func addBotHandlers(conn *irc.Conn) {
 		conn.HandleFunc("privmsg", h)
 	}
 	conn.HandleFunc("notice", Printer)
+	addLottoHandlers(conn)
+}
+
+func addLottoHandlers(conn *irc.Conn) {
+	var lottos = make(map[string]*Lotto)
+	conn.HandleFunc("privmsg", LottoPrivmsgHandler(lottos))
+	conn.HandleFunc("nick", LottoNickHandler(lottos))
+	conn.HandleFunc("part", LottoPartHandler(lottos))
+	conn.HandleFunc("quit", LottoQuitHandler(lottos))
 }
 
 func Colorize(text string) string {
@@ -179,7 +193,7 @@ func Printer(conn *irc.Conn, line *irc.Line) {
 }
 
 func Identified(conn *irc.Conn, line *irc.Line) {
-	isIdentify := regexp.MustCompile(`!^identified (\S+)`)
+	isIdentify := regexp.MustCompile(`^!identified (\S+)`)
 	matches := isIdentify.FindStringSubmatch(line.Text())
 	if len(matches) == 2 {
 		fmt.Println("Calls isIdentified.")
