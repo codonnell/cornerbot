@@ -17,7 +17,7 @@ const (
 )
 
 func ProcessLottoMessages(conn *irc.Conn, channel string, messages chan(LottoMessage), close chan(int)) {
-	var ticker = time.NewTicker(1 * time.Second)
+	var ticker = time.NewTicker(2 * time.Second)
 	messageKeys := make([]int, 0)
 	messageStore := make(map[int][]LottoMessage)
 	for {
@@ -71,25 +71,27 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 			return fmt.Sprintf("%s has joined the lotto!", msgs[0].Message)
 		} else {
 			var buffer bytes.Buffer
-			for _, msg := range msgs[:len(msgs)-1] {
+			for _, msg := range msgs[:len(msgs)-2] {
 				buffer.WriteString(msg.Message)
 				buffer.WriteString(", ")
 			}
-			buffer.WriteString("and ")
+			buffer.WriteString(msgs[len(msgs)-2].Message)
+			buffer.WriteString(" and ")
 			buffer.WriteString(msgs[len(msgs)-1].Message)
 			buffer.WriteString(" have joined the lotto!")
 			return buffer.String()
 		}
 	case Leave:
 		if len(msgs) == 1 {
-			return fmt.Sprintf("%s has joined the lotto!", msgs[0].Message)
+			return fmt.Sprintf("%s has been removed the lotto!", msgs[0].Message)
 		} else {
 			var buffer bytes.Buffer
-			for _, msg := range msgs[:len(msgs)-1] {
+			for _, msg := range msgs[:len(msgs)-2] {
 				buffer.WriteString(msg.Message)
 				buffer.WriteString(", ")
 			}
-			buffer.WriteString("and ")
+			buffer.WriteString(msgs[len(msgs)-2].Message)
+			buffer.WriteString(" and ")
 			buffer.WriteString(msgs[len(msgs)-1].Message)
 			buffer.WriteString(" have been removed from the lotto")
 			return buffer.String()
@@ -133,8 +135,10 @@ func LottoPartHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 				delete(lottos, line.Target())
 				return
 			}
-			lotto.Remove(sender(line))
-			lotto.MessageChan <- LottoMessage{Leave, line.Nick}
+			removedSomeone := lotto.Remove(sender(line))
+			if removedSomeone {
+				lotto.MessageChan <- LottoMessage{Leave, line.Nick}
+			}
 			// conn.Privmsgf(line.Target(), "%s have been removed from the lotto", line.Nick)
 		}
 	}
@@ -150,8 +154,10 @@ func LottoQuitHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 				// conn.Privmsg(k, "The lotto has been canceled because the host left")
 				return
 			}
-			lottos[k].Remove(sender(line))
-			lottos[k].MessageChan <- LottoMessage{Leave, line.Nick}
+			removedSomeone := lottos[k].Remove(sender(line))
+			if removedSomeone {
+				lottos[k].MessageChan <- LottoMessage{Leave, line.Nick}
+			}
 			// conn.Privmsgf(k, "%s have been removed from the lotto", line.Nick)
 		}
 	}
@@ -161,7 +167,6 @@ func LottoQuitHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 func LottoPrivmsgHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
 		sanitizeLottos(lottos, line.Target())
-		fmt.Println(lottos[line.Target()])
 		isStartLotto := regexp.MustCompile(`^!startlotto\s+(.+)`)
 		matches := isStartLotto.FindStringSubmatch(line.Text())
 		if len(matches) > 1 {
@@ -269,12 +274,14 @@ func (lotto *Lotto) ChangeNick(from string, to string) {
 	}
 }
 
-func (lotto *Lotto) Remove(nick Nick) {
+func (lotto *Lotto) Remove(nick Nick) bool {
 	for i, enteredNick := range lotto.Entries {
 		if sameNick(nick, enteredNick) {
 			lotto.Entries = append(lotto.Entries[:i], lotto.Entries[i+1:]...)
+			return true
 		}
 	}
+	return false
 }
 
 func (lotto *Lotto) Start(host Nick, prize string) {
