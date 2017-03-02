@@ -74,7 +74,7 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 		return msgs[0].Message
 	case Join:
 		if len(msgs) == 1 {
-			return fmt.Sprintf("%s grabs a cold one from the fridge for a chance to win the lotto.", msgs[0].Message)
+			return Purple(fmt.Sprintf("%s grabs a cold one from the fridge for a chance to win the lotto.", msgs[0].Message))
 		} else {
 			var buffer bytes.Buffer
 			for _, msg := range msgs[:len(msgs)-2] {
@@ -85,7 +85,7 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 			buffer.WriteString(" and ")
 			buffer.WriteString(msgs[len(msgs)-1].Message)
 			buffer.WriteString(" have grabbed a cold one from the fridge")
-			return buffer.String()
+			return Purple(buffer.String())
 		}
 	case Leave:
 		if len(msgs) == 1 {
@@ -320,8 +320,15 @@ func (lotto *Lotto) Close() {
 
 func Orange(text string) string {
 	var buffer bytes.Buffer
-
 	buffer.WriteString("\x037")
+	buffer.WriteString(text)
+	buffer.WriteString("\x03")
+	return buffer.String()
+}
+
+func Purple(text string) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("\x036")
 	buffer.WriteString(text)
 	buffer.WriteString("\x03")
 	return buffer.String()
