@@ -41,6 +41,12 @@ func ProcessLottoMessages(conn *irc.Conn, channel string, messages chan(LottoMes
 			}
 		case m := <-messages:
 			fmt.Printf("Received message of type %d with message %s", m.Type, m.Message)
+			if m.Type == End || m.Type == Start || m.Type == Error {
+				msgs := make([]LottoMessage, 1)
+				msgs[0] = m
+				conn.Privmsg(channel, formatLottoMessage(m.Type, msgs))
+				break
+			}
 			exists := false
 			for _, k := range messageKeys {
 				if k == m.Type {
@@ -68,7 +74,7 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 		return msgs[0].Message
 	case Join:
 		if len(msgs) == 1 {
-			return fmt.Sprintf("%s has joined the lotto!", msgs[0].Message)
+			return fmt.Sprintf("%s grabs a cold one from the fridge", msgs[0].Message)
 		} else {
 			var buffer bytes.Buffer
 			for _, msg := range msgs[:len(msgs)-2] {
@@ -78,12 +84,12 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 			buffer.WriteString(msgs[len(msgs)-2].Message)
 			buffer.WriteString(" and ")
 			buffer.WriteString(msgs[len(msgs)-1].Message)
-			buffer.WriteString(" have joined the lotto!")
+			buffer.WriteString(" have grabbed a cold one from the fridge")
 			return buffer.String()
 		}
 	case Leave:
 		if len(msgs) == 1 {
-			return fmt.Sprintf("%s has been removed the lotto!", msgs[0].Message)
+			return fmt.Sprintf("%s drops their drink and it shatters. Party foul!", msgs[0].Message)
 		} else {
 			var buffer bytes.Buffer
 			for _, msg := range msgs[:len(msgs)-2] {
@@ -93,7 +99,7 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 			buffer.WriteString(msgs[len(msgs)-2].Message)
 			buffer.WriteString(" and ")
 			buffer.WriteString(msgs[len(msgs)-1].Message)
-			buffer.WriteString(" have been removed from the lotto")
+			buffer.WriteString(" simultaneously drop their drinks. What a show!")
 			return buffer.String()
 		}
 	}
@@ -167,18 +173,18 @@ func LottoQuitHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 func LottoPrivmsgHandler(lottos map[string]*Lotto) irc.HandlerFunc {
 	return func(conn *irc.Conn, line *irc.Line) {
 		sanitizeLottos(lottos, line.Target())
-		isStartLotto := regexp.MustCompile(`^!startlotto\s+(.+)`)
+		isStartLotto := regexp.MustCompile(`^!start\s+(.+)`)
 		matches := isStartLotto.FindStringSubmatch(line.Text())
 		if len(matches) > 1 {
 			fmt.Println("Starting lotto")
 			handleStartLotto(lottos[line.Target()], conn, line, matches[1])
 		}
-		isJoinLotto := regexp.MustCompile(`^!joinlotto(\s+.*|$)`)
+		isJoinLotto := regexp.MustCompile(`^!chill(\s+.*|$)`)
 		if len(isJoinLotto.FindStringSubmatch(line.Text())) > 0 {
 			fmt.Println("Joining lotto")
 			handleJoinLotto(lottos[line.Target()], conn, line)
 		}
-		isEndLotto := regexp.MustCompile(`^!endlotto(\s+.*|$)`)
+		isEndLotto := regexp.MustCompile(`^!end(\s+.*|$)`)
 		if len(isEndLotto.FindStringSubmatch(line.Text())) > 0 {
 			fmt.Println("Ending lotto")
 			ended := handleEndLotto(lottos[line.Target()], conn, line)
@@ -207,19 +213,19 @@ func sender(line *irc.Line) Nick {
 
 func handleStartLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line, prize string) {
 	if lotto.Host != nil {
-		lotto.MessageChan <- LottoMessage{Error,  "You cannot start a lotto while one is still running"}
+		lotto.MessageChan <- LottoMessage{Error,  fmt.Sprintf("Silly %s. There's already a lotto running!", line.Nick)}
 		// conn.Privmsg(line.Target(), "You cannot start a lotto while one is still running")
 		return
 	}
 	lotto.Start(sender(line), prize)
 	go ProcessLottoMessages(conn, line.Target(), lotto.MessageChan, lotto.CloseChan)
-	lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s has started a lotto for a %s!", lotto.Host.Nick, prize)}
+	lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win %s.", lotto.Host.Nick, prize)}
 	// conn.Privmsgf(line.Target(), "%s has started a lotto for a %s!", lotto.Host.Nick, prize)
 }
 
 func handleJoinLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) {
 	if lotto.Host == nil {
-		conn.Privmsg(line.Target(), "You cannot join that which does not exist")
+		conn.Privmsg(line.Target(), "There's no lotto running at the moment")
 		return
 	}
 	joined := lotto.Join(sender(line))
@@ -227,19 +233,20 @@ func handleJoinLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) {
 		lotto.MessageChan <- LottoMessage{Join, line.Nick}
 		// conn.Privmsgf(line.Target(), "%s has joined the lotto!", line.Nick)
 	} else {
-		lotto.MessageChan <- LottoMessage{Error, fmt.Sprintf("%s has already joined the lotto", line.Nick)}
+		lotto.MessageChan <- LottoMessage{Error, fmt.Sprintf("Silly %s. One drink at a time.", line.Nick)}
 		// conn.Privmsgf(line.Target(), "%s has already joined the lotto", line.Nick)
 	}
 }
 
 func handleEndLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) bool {
-	if sameNick(sender(line), *lotto.Host) {
+	senderMode := conn.StateTracker().GetChannel(line.Target()).Nicks[line.Nick]
+	if sameNick(sender(line), *lotto.Host) || senderMode.Owner || senderMode.Admin {
 		winner := lotto.Winner()
 		if winner == nil {
-			lotto.MessageChan <- LottoMessage{End,  "Your empty lotto has ended without a winner. How sad!"}
+			lotto.MessageChan <- LottoMessage{End,  "No one wins, because no one had a drink! The lotto is over."}
 			// conn.Privmsg(line.Target(), "Your empty lotto has ended without a winner. How sad!")
 		} else {
-			lotto.MessageChan <- LottoMessage{End, fmt.Sprintf("%s has won a %s!", winner.Nick, lotto.Prize)}
+			lotto.MessageChan <- LottoMessage{End, fmt.Sprintf("%s has the yummiest beverage and won a %s!", winner.Nick, lotto.Prize)}
 			// conn.Privmsgf(line.Target(), "%s has won a %s!", winner.Nick, lotto.Prize)
 		}
 		return true
