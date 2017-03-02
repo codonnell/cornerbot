@@ -221,7 +221,7 @@ func handleStartLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line, prize string
 	if senderMode.Owner || senderMode.Admin {
 		lotto.Start(sender(line), prize)
 		go ProcessLottoMessages(conn, line.Target(), lotto.MessageChan, lotto.CloseChan)
-		lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win a %s.", lotto.Host.Nick, prize)}
+		lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win a/an %s.", lotto.Host.Nick, prize)}
 	}
 	// conn.Privmsgf(line.Target(), "%s has started a lotto for a %s!", lotto.Host.Nick, prize)
 }
@@ -249,7 +249,7 @@ func handleEndLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) bool {
 			lotto.MessageChan <- LottoMessage{End,  "No one wins, because no one had a drink! The lotto is over."}
 			// conn.Privmsg(line.Target(), "Your empty lotto has ended without a winner. How sad!")
 		} else {
-			lotto.MessageChan <- LottoMessage{End, fmt.Sprintf("%s has the yummiest beverage and won a %s!", winner.Nick, lotto.Prize)}
+			lotto.MessageChan <- LottoMessage{End, fmt.Sprintf("%s has the yummiest beverage and won a/an %s!", winner.Nick, lotto.Prize)}
 			// conn.Privmsgf(line.Target(), "%s has won a %s!", winner.Nick, lotto.Prize)
 		}
 		return true
