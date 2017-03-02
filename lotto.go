@@ -74,7 +74,7 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 		return msgs[0].Message
 	case Join:
 		if len(msgs) == 1 {
-			return fmt.Sprintf("%s grabs a cold one from the fridge", msgs[0].Message)
+			return fmt.Sprintf("%s grabs a cold one from the fridge for a chance to win the lotto.", msgs[0].Message)
 		} else {
 			var buffer bytes.Buffer
 			for _, msg := range msgs[:len(msgs)-2] {
@@ -228,7 +228,7 @@ func handleStartLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line, prize string
 
 func handleJoinLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) {
 	if lotto.Host == nil {
-		conn.Privmsg(line.Target(), "There's no lotto running at the moment")
+		conn.Privmsg(line.Target(), "There's no lotto running at the moment.")
 		return
 	}
 	joined := lotto.Join(sender(line))
