@@ -231,6 +231,10 @@ func handleJoinLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) {
 		conn.Privmsg(line.Target(), "There's no lotto running at the moment.")
 		return
 	}
+	if line.Nick == lotto.Host.Nick {
+		lotto.MessageChan <- LottoMessage{Error, "You can't join your own lotto, silly goose."}
+		return
+	}
 	joined := lotto.Join(sender(line))
 	if joined {
 		lotto.MessageChan <- LottoMessage{Join, line.Nick}
