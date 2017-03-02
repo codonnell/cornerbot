@@ -264,7 +264,7 @@ func handleEndLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line) bool {
 }
 
 func sameNick(nick1 Nick, nick2 Nick) bool {
-	return nick1.Host == nick2.Host
+	return nick1.User == nick2.User && nick1.Host == nick2.Host
 }
 
 func (lotto *Lotto) Join(nick Nick) bool {
