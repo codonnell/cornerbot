@@ -67,9 +67,9 @@ func formatLottoMessage(t int, msgs []LottoMessage) string {
 	fmt.Println(msgs)
 	switch t {
 	case End:
-		return msgs[0].Message
+		return Orange(msgs[0].Message)
 	case Start:
-		return msgs[0].Message
+		return Orange(msgs[0].Message)
 	case Error:
 		return msgs[0].Message
 	case Join:
@@ -316,4 +316,13 @@ func (lotto *Lotto) Winner() *Nick {
 
 func (lotto *Lotto) Close() {
 	lotto.CloseChan <- 0
+}
+
+func Orange(text string) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("\x037")
+	buffer.WriteString(text)
+	buffer.WriteString("\x03")
+	return buffer.String()
 }
