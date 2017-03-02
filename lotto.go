@@ -217,9 +217,12 @@ func handleStartLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line, prize string
 		// conn.Privmsg(line.Target(), "You cannot start a lotto while one is still running")
 		return
 	}
-	lotto.Start(sender(line), prize)
-	go ProcessLottoMessages(conn, line.Target(), lotto.MessageChan, lotto.CloseChan)
-	lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win %s.", lotto.Host.Nick, prize)}
+	senderMode := conn.StateTracker().GetChannel(line.Target()).Nicks[line.Nick]
+	if senderMode.Owner || senderMode.Admin {
+		lotto.Start(sender(line), prize)
+		go ProcessLottoMessages(conn, line.Target(), lotto.MessageChan, lotto.CloseChan)
+		lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win %s.", lotto.Host.Nick, prize)}
+	}
 	// conn.Privmsgf(line.Target(), "%s has started a lotto for a %s!", lotto.Host.Nick, prize)
 }
 
