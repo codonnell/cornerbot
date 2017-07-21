@@ -218,7 +218,7 @@ func handleStartLotto(lotto *Lotto, conn *irc.Conn, line *irc.Line, prize string
 		return
 	}
 	senderMode := conn.StateTracker().GetChannel(line.Target()).Nicks[line.Nick]
-	if senderMode.Owner || senderMode.Admin {
+	if senderMode.Owner || senderMode.Admin || senderMode.Op {
 		lotto.Start(sender(line), prize)
 		go ProcessLottoMessages(conn, line.Target(), lotto.MessageChan, lotto.CloseChan)
 		lotto.MessageChan <- LottoMessage{Start, fmt.Sprintf("%s just brought a cooler full of refreshing beverages. Type !chill for a chance to win a/an %s.", lotto.Host.Nick, prize)}
